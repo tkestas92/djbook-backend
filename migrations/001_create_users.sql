@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS users (
+    id         CHAR(36) PRIMARY KEY,
+    google_id  VARCHAR(255) UNIQUE,
+    apple_id   VARCHAR(255) UNIQUE,
+    email      VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

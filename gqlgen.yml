@@ -1,0 +1,59 @@
+schema:
+  - internal/graph/schema.graphqls
+
+exec:
+  filename: internal/graph/generated.go
+  package: graph
+
+model:
+  filename: internal/graph/model/models_gen.go
+  package: model
+
+resolver:
+  layout: follow-schema
+  dir: internal/graph/resolvers
+  package: resolvers
+  filename_template: "{name}.resolvers.go"
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.ID
+  DateTime:
+    model: github.com/99designs/gqlgen/graphql.String
+  Date:
+    model: github.com/99designs/gqlgen/graphql.String
+  Time:
+    model: github.com/99designs/gqlgen/graphql.String
+  Upload:
+    model: github.com/99designs/gqlgen/graphql.Upload
+  User:
+    model: github.com/djbook/backend/internal/graph/model.User
+  DjProfile:
+    model: github.com/djbook/backend/internal/graph/model.DjProfile
+  Event:
+    model: github.com/djbook/backend/internal/graph/model.Event
+  EventStatusHistory:
+    model: github.com/djbook/backend/internal/graph/model.EventStatusHistory
+  ProfilePhoto:
+    model: github.com/djbook/backend/internal/graph/model.ProfilePhoto
+  SocialLink:
+    model: github.com/djbook/backend/internal/graph/model.SocialLink
+  FinanceSummary:
+    model: github.com/djbook/backend/internal/graph/model.FinanceSummary
+  MonthlyEarning:
+    model: github.com/djbook/backend/internal/graph/model.MonthlyEarning
+  DjProfileInput:
+    model: github.com/djbook/backend/internal/graph/model.DjProfileInput
+  EventInput:
+    model: github.com/djbook/backend/internal/graph/model.EventInput
+  EventFilter:
+    model: github.com/djbook/backend/internal/graph/model.EventFilter
+  SocialLinkInput:
+    model: github.com/djbook/backend/internal/graph/model.SocialLinkInput
+  EventStatus:
+    model: github.com/djbook/backend/internal/graph/model.EventStatus
+  PaymentStatus:
+    model: github.com/djbook/backend/internal/graph/model.PaymentStatus
+  Period:
+    model: github.com/djbook/backend/internal/graph/model.Period

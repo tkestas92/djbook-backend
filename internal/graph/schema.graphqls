@@ -1,0 +1,151 @@
+scalar DateTime
+scalar Date
+scalar Time
+scalar Upload
+
+type User {
+  id:        ID!
+  email:     String!
+  profiles:  [DjProfile!]!
+  createdAt: DateTime!
+}
+
+type DjProfile {
+  id:                ID!
+  djName:            String!
+  bio:               String
+  email:             String
+  managementContact: String
+  genres:            [String!]!
+  photos:            [ProfilePhoto!]!
+  socialLinks:       [SocialLink!]!
+  events:            [Event!]!
+  upcomingEvents:    [Event!]!
+  createdAt:         DateTime!
+}
+
+type Event {
+  id:            ID!
+  title:         String!
+  venue:         String!
+  date:          Date!
+  startTime:     Time!
+  endTime:       Time
+  notes:         String
+  amountEur:     Float
+  isPublic:      Boolean!
+  ticketsUrl:    String
+  eventStatus:   EventStatus!
+  paymentStatus: PaymentStatus!
+  statusHistory: [EventStatusHistory!]!
+  createdAt:     DateTime!
+}
+
+type EventStatusHistory {
+  id:        ID!
+  oldStatus: String
+  newStatus: String!
+  changedAt: DateTime!
+}
+
+type ProfilePhoto {
+  id:        ID!
+  url:       String!
+  sortOrder: Int!
+  createdAt: DateTime!
+}
+
+type SocialLink {
+  id:       ID!
+  platform: String!
+  url:      String!
+}
+
+type FinanceSummary {
+  thisMonthEarnings:   Float!
+  thisMonthEventCount: Int!
+  thisYearEarnings:    Float!
+  thisYearEventCount:  Int!
+  unpaidAmount:        Float!
+  unpaidEventCount:    Int!
+  monthlyChart:        [MonthlyEarning!]!
+  bestMonth:           MonthlyEarning
+}
+
+type MonthlyEarning {
+  month:      String!
+  earnings:   Float!
+  eventCount: Int!
+}
+
+enum EventStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
+
+enum Period {
+  MONTH
+  QUARTER
+  YEAR
+}
+
+input DjProfileInput {
+  djName:            String!
+  bio:               String
+  email:             String
+  managementContact: String
+  genres:            [String!]!
+}
+
+input EventInput {
+  title:         String!
+  venue:         String!
+  date:          Date!
+  startTime:     Time!
+  endTime:       Time
+  notes:         String
+  amountEur:     Float
+  isPublic:      Boolean
+  ticketsUrl:    String
+  eventStatus:   EventStatus!
+  paymentStatus: PaymentStatus!
+}
+
+input EventFilter {
+  month:         String
+  eventStatus:   EventStatus
+  paymentStatus: PaymentStatus
+}
+
+input SocialLinkInput {
+  platform: String!
+  url:      String!
+}
+
+type Query {
+  me:                              User!
+  djProfile(id: ID!):              DjProfile!
+  events(profileId: ID!, filter: EventFilter): [Event!]!
+  financeSummary(profileId: ID!, period: Period): FinanceSummary!
+}
+
+type Mutation {
+  createDjProfile(input: DjProfileInput!):                   DjProfile!
+  updateDjProfile(id: ID!, input: DjProfileInput!):          DjProfile!
+  deleteDjProfile(id: ID!):                                  Boolean!
+  createEvent(profileId: ID!, input: EventInput!):           Event!
+  updateEvent(id: ID!, input: EventInput!):                  Event!
+  deleteEvent(id: ID!):                                      Boolean!
+  uploadPhoto(profileId: ID!, file: Upload!):                ProfilePhoto!
+  deletePhoto(id: ID!):                                      Boolean!
+  reorderPhotos(profileId: ID!, photoIds: [ID!]!):           Boolean!
+  upsertSocialLink(profileId: ID!, input: SocialLinkInput!): SocialLink!
+  deleteSocialLink(id: ID!):                                 Boolean!
+}
