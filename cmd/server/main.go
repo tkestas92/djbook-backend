@@ -45,14 +45,19 @@ func main() {
 		log.Fatalf("run migrations: %v", err)
 	}
 
-	// 4. Connect Redis
-	redisURL := mustEnv("REDIS_URL")
-	rdb := redis.NewClient(&redis.Options{
-		Addr: redisURL,
-	})
-	ctx := context.Background()
-	if _, err := rdb.Ping(ctx).Result(); err != nil {
-		log.Printf("warning: redis not available: %v", err)
+	// 4. Connect Redis (optional — used for token invalidation)
+	var rdb *redis.Client
+	if redisURL := getEnv("REDIS_URL", ""); redisURL != "" {
+		rdb = redis.NewClient(&redis.Options{
+			Addr: redisURL,
+		})
+		if _, err := rdb.Ping(context.Background()).Result(); err != nil {
+			log.Printf("warning: redis not available: %v — continuing without token invalidation", err)
+			rdb.Close()
+			rdb = nil
+		}
+	} else {
+		log.Println("REDIS_URL not set — continuing without token invalidation")
 	}
 
 	// 5. Build repositories, services, and resolvers

@@ -111,5 +111,8 @@ func RequireUserID(ctx context.Context) (string, error) {
 
 // InvalidateToken adds a token to the Redis deny list.
 func InvalidateToken(ctx context.Context, rdb *redis.Client, tokenStr string, ttl time.Duration) error {
+	if rdb == nil {
+		return nil
+	}
 	return rdb.Set(ctx, "invalid_token:"+tokenStr, "1", ttl).Err()
 }
