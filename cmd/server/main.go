@@ -74,7 +74,7 @@ func main() {
 	rootResolver := resolvers.NewResolver(userSvc, profileSvc, eventSvc, financeSvc)
 
 	// 6. Setup gqlgen server
-	jwtSecret := mustEnv("JWT_SECRET")
+	jwtSecret := getEnv("JWT_SECRET", "djbook-default-secret-change-in-production")
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: rootResolver,
