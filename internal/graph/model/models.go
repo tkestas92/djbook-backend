@@ -164,6 +164,20 @@ type SocialLinkInput struct {
 	URL      string `json:"url"`
 }
 
+type ReleaseInput struct {
+	Title       string                  `json:"title"`
+	Artist      string                  `json:"artist"`
+	ArtworkURL  *string                 `json:"artworkUrl,omitempty"`
+	SongLinkURL string                  `json:"songLinkUrl"`
+	Platforms   []*ReleasePlatformInput `json:"platforms"`
+}
+
+type ReleasePlatformInput struct {
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	Enabled bool   `json:"enabled"`
+}
+
 // Response types
 
 type User struct {
@@ -222,6 +236,22 @@ type SocialLink struct {
 	ID       string `json:"id"`
 	Platform string `json:"platform"`
 	URL      string `json:"url"`
+}
+
+type Release struct {
+	ID          string             `json:"id"`
+	Title       string             `json:"title"`
+	Artist      string             `json:"artist"`
+	ArtworkURL  *string            `json:"artworkUrl,omitempty"`
+	SongLinkURL string             `json:"songLinkUrl"`
+	Platforms   []*ReleasePlatform `json:"platforms"`
+	CreatedAt   string             `json:"createdAt"`
+}
+
+type ReleasePlatform struct {
+	Name    string `json:"name"`
+	URL     string `json:"url"`
+	Enabled bool   `json:"enabled"`
 }
 
 type FinanceSummary struct {

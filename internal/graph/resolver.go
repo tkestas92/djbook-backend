@@ -9,5 +9,6 @@ type Resolver struct {
 	UserService    *service.UserService
 	ProfileService *service.ProfileService
 	EventService   *service.EventService
+	ReleaseService *service.ReleaseService
 	FinanceService *service.FinanceService
 }

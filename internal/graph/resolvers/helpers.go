@@ -30,6 +30,7 @@ func NewResolver(
 	userSvc *service.UserService,
 	profileSvc *service.ProfileService,
 	eventSvc *service.EventService,
+	releaseSvc *service.ReleaseService,
 	financeSvc *service.FinanceService,
 ) *Resolver {
 	return &Resolver{
@@ -37,6 +38,7 @@ func NewResolver(
 			UserService:    userSvc,
 			ProfileService: profileSvc,
 			EventService:   eventSvc,
+			ReleaseService: releaseSvc,
 			FinanceService: financeSvc,
 		},
 	}

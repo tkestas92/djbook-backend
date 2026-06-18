@@ -61,6 +61,22 @@ type SocialLink {
   url:      String!
 }
 
+type Release {
+  id:          ID!
+  title:       String!
+  artist:      String!
+  artworkUrl:  String
+  songLinkUrl: String!
+  platforms:   [ReleasePlatform!]!
+  createdAt:   String!
+}
+
+type ReleasePlatform {
+  name:    String!
+  url:     String!
+  enabled: Boolean!
+}
+
 type FinanceSummary {
   thisMonthEarnings:   Float!
   thisMonthEventCount: Int!
@@ -129,11 +145,29 @@ input SocialLinkInput {
   url:      String!
 }
 
+input ReleaseInput {
+  title:       String!
+  artist:      String!
+  artworkUrl:  String
+  songLinkUrl: String!
+  platforms:   [ReleasePlatformInput!]!
+}
+
+input ReleasePlatformInput {
+  name:    String!
+  url:     String!
+  enabled: Boolean!
+}
+
 type Query {
   me:                              User!
   djProfile(id: ID!):              DjProfile!
   events(profileId: ID!, filter: EventFilter): [Event!]!
   financeSummary(profileId: ID!, period: Period): FinanceSummary!
+}
+
+extend type Query {
+  releases(profileId: ID!): [Release!]!
 }
 
 type Mutation {
@@ -148,4 +182,9 @@ type Mutation {
   reorderPhotos(profileId: ID!, photoIds: [ID!]!):           Boolean!
   upsertSocialLink(profileId: ID!, input: SocialLinkInput!): SocialLink!
   deleteSocialLink(id: ID!):                                 Boolean!
+}
+
+extend type Mutation {
+  createRelease(profileId: ID!, input: ReleaseInput!): Release!
+  deleteRelease(id: ID!):                              Boolean!
 }

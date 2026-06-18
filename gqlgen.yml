@@ -9,12 +9,6 @@ model:
   filename: internal/graph/model/models_gen.go
   package: model
 
-resolver:
-  layout: follow-schema
-  dir: internal/graph/resolvers
-  package: resolvers
-  filename_template: "{name}.resolvers.go"
-
 models:
   ID:
     model:
@@ -39,6 +33,10 @@ models:
     model: github.com/djbook/backend/internal/graph/model.ProfilePhoto
   SocialLink:
     model: github.com/djbook/backend/internal/graph/model.SocialLink
+  Release:
+    model: github.com/djbook/backend/internal/graph/model.Release
+  ReleasePlatform:
+    model: github.com/djbook/backend/internal/graph/model.ReleasePlatform
   FinanceSummary:
     model: github.com/djbook/backend/internal/graph/model.FinanceSummary
   MonthlyEarning:
@@ -51,6 +49,10 @@ models:
     model: github.com/djbook/backend/internal/graph/model.EventFilter
   SocialLinkInput:
     model: github.com/djbook/backend/internal/graph/model.SocialLinkInput
+  ReleaseInput:
+    model: github.com/djbook/backend/internal/graph/model.ReleaseInput
+  ReleasePlatformInput:
+    model: github.com/djbook/backend/internal/graph/model.ReleasePlatformInput
   EventStatus:
     model: github.com/djbook/backend/internal/graph/model.EventStatus
   PaymentStatus:

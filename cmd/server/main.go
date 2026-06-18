@@ -64,14 +64,16 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	profileRepo := repository.NewProfileRepository(db)
 	eventRepo := repository.NewEventRepository(db)
+	releaseRepo := repository.NewReleaseRepository(db)
 	financeRepo := repository.NewFinanceRepository(db)
 
 	userSvc := service.NewUserService(userRepo)
 	profileSvc := service.NewProfileService(profileRepo)
 	eventSvc := service.NewEventService(eventRepo)
+	releaseSvc := service.NewReleaseService(releaseRepo)
 	financeSvc := service.NewFinanceService(financeRepo)
 
-	rootResolver := resolvers.NewResolver(userSvc, profileSvc, eventSvc, financeSvc)
+	rootResolver := resolvers.NewResolver(userSvc, profileSvc, eventSvc, releaseSvc, financeSvc)
 
 	// 6. Setup gqlgen server
 	jwtSecret := getEnv("JWT_SECRET", "djbook-default-secret-change-in-production")
