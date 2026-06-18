@@ -17,12 +17,14 @@ const maxUploadSize = 10 << 20 // 10 MB
 
 // UploadHandler serves photo upload endpoints.
 type UploadHandler struct {
+	userSvc    *service.UserService
 	profileSvc *service.ProfileService
 	photoDir   string
 }
 
-func NewUploadHandler(profileSvc *service.ProfileService, photoDir string) *UploadHandler {
+func NewUploadHandler(userSvc *service.UserService, profileSvc *service.ProfileService, photoDir string) *UploadHandler {
 	return &UploadHandler{
+		userSvc:    userSvc,
 		profileSvc: profileSvc,
 		photoDir:   photoDir,
 	}
@@ -43,6 +45,10 @@ func (h *UploadHandler) UploadPhoto(w http.ResponseWriter, r *http.Request) {
 	userID, err := auth.RequireUserID(r.Context())
 	if err != nil {
 		http.Error(w, "authentication required", http.StatusUnauthorized)
+		return
+	}
+	if err := auth.CheckDemoWrite(r.Context(), h.userSvc); err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}
 

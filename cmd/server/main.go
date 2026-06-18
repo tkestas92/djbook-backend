@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/joho/godotenv"
@@ -81,6 +82,15 @@ func main() {
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
 		Resolvers: rootResolver,
 	}))
+	srv.AroundFields(func(ctx context.Context, next graphql.Resolver) (interface{}, error) {
+		fc := graphql.GetFieldContext(ctx)
+		if fc != nil && fc.Object == "Mutation" && auth.IsBlockedDemoMutation(fc.Field.Name) {
+			if err := auth.CheckDemoWrite(ctx, userSvc); err != nil {
+				return nil, err
+			}
+		}
+		return next(ctx)
+	})
 
 	// 7. Ensure upload directory exists
 	uploadDir := getEnv("UPLOAD_DIR", "./uploads")
@@ -106,7 +116,7 @@ func main() {
 	mux.Handle("/me", jwtMiddleware(http.HandlerFunc(meHandler.GetMe)))
 
 	// Photo upload endpoint
-	uploadHandler := apihandler.NewUploadHandler(profileSvc, photoDir)
+	uploadHandler := apihandler.NewUploadHandler(userSvc, profileSvc, photoDir)
 	mux.Handle("/upload/photo", jwtMiddleware(http.HandlerFunc(uploadHandler.UploadPhoto)))
 
 	// Static file serving for uploaded photos
