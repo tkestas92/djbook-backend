@@ -84,8 +84,8 @@ func main() {
 	}))
 	srv.AroundFields(func(ctx context.Context, next graphql.Resolver) (interface{}, error) {
 		fc := graphql.GetFieldContext(ctx)
-		if fc != nil && fc.Object == "Mutation" && auth.IsBlockedDemoMutation(fc.Field.Name) {
-			if err := auth.CheckDemoWrite(ctx, userSvc); err != nil {
+		if fc != nil && fc.Object == "Mutation" {
+			if err := auth.CheckDemoWrite(ctx); err != nil {
 				return nil, err
 			}
 		}
@@ -105,9 +105,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Auth endpoints
-	authHandler := auth.NewHandler(userSvc, profileSvc, jwtSecret)
+	authHandler := auth.NewHandler(
+		userSvc,
+		profileSvc,
+		jwtSecret,
+		getEnv("DEMO_USERNAME", "kantrybes"),
+		getEnv("DEMO_PASSWORD", "Kojine123"),
+	)
 	mux.HandleFunc("/auth/register", authHandler.Register)
 	mux.HandleFunc("/auth/login", authHandler.Login)
+	mux.HandleFunc("/auth/demo", authHandler.DemoLogin)
 	mux.HandleFunc("/auth/google", handleGoogleAuth(userSvc, jwtSecret))
 	mux.HandleFunc("/auth/apple", handleAppleAuth(userSvc, jwtSecret))
 
@@ -216,7 +223,7 @@ func handleGoogleAuth(userSvc *service.UserService, jwtSecret string) http.Handl
 			return
 		}
 
-		token, err := auth.GenerateToken(user.ID, jwtSecret)
+		token, err := auth.GenerateToken(user.ID, jwtSecret, false)
 		if err != nil {
 			http.Error(w, "token error", http.StatusInternalServerError)
 			return
@@ -252,7 +259,7 @@ func handleAppleAuth(userSvc *service.UserService, jwtSecret string) http.Handle
 			return
 		}
 
-		token, err := auth.GenerateToken(user.ID, jwtSecret)
+		token, err := auth.GenerateToken(user.ID, jwtSecret, false)
 		if err != nil {
 			http.Error(w, "token error", http.StatusInternalServerError)
 			return

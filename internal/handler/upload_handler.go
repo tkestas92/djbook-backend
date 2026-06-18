@@ -47,7 +47,7 @@ func (h *UploadHandler) UploadPhoto(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "authentication required", http.StatusUnauthorized)
 		return
 	}
-	if err := auth.CheckDemoWrite(r.Context(), h.userSvc); err != nil {
+	if err := auth.CheckDemoWrite(r.Context()); err != nil {
 		http.Error(w, err.Error(), http.StatusForbidden)
 		return
 	}

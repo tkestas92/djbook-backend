@@ -13,18 +13,23 @@ import (
 
 type contextKey string
 
-const UserIDKey contextKey = "userID"
+const (
+	UserIDKey contextKey = "userID"
+	IsDemoKey contextKey = "isDemo"
+)
 
 // Claims represents the JWT payload.
 type Claims struct {
 	UserID string `json:"userId"`
+	IsDemo bool   `json:"isDemo"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken creates a signed JWT for the given user ID.
-func GenerateToken(userID, secret string) (string, error) {
+func GenerateToken(userID, secret string, isDemo bool) (string, error) {
 	claims := Claims{
 		UserID: userID,
+		IsDemo: isDemo,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -89,6 +94,7 @@ func JWTMiddleware(secret string, rdb *redis.Client) func(http.Handler) http.Han
 			}
 
 			ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+			ctx = context.WithValue(ctx, IsDemoKey, claims.IsDemo)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
@@ -98,6 +104,12 @@ func JWTMiddleware(secret string, rdb *redis.Client) func(http.Handler) http.Han
 func GetUserID(ctx context.Context) string {
 	uid, _ := ctx.Value(UserIDKey).(string)
 	return uid
+}
+
+// IsDemoSession returns true when the JWT was issued for the read-only demo flow.
+func IsDemoSession(ctx context.Context) bool {
+	isDemo, _ := ctx.Value(IsDemoKey).(bool)
+	return isDemo
 }
 
 // RequireUserID returns an error if the user is not authenticated.

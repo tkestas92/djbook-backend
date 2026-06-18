@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/djbook/backend/internal/auth"
+	"github.com/djbook/backend/internal/model"
 	"github.com/djbook/backend/internal/repository"
 	"github.com/djbook/backend/internal/service"
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +34,7 @@ func newAuthTestHandler() (*auth.Handler, *repository.MemoryUserStore) {
 	profileStore := repository.NewMemoryProfileStore()
 	userSvc := service.NewUserService(userStore)
 	profileSvc := service.NewProfileService(profileStore)
-	return auth.NewHandler(userSvc, profileSvc, testJWTSecret), userStore
+	return auth.NewHandler(userSvc, profileSvc, testJWTSecret, "demouser", "demopass12"), userStore
 }
 
 func postJSON(t *testing.T, handler http.HandlerFunc, path string, body any) *httptest.ResponseRecorder {
@@ -219,7 +220,7 @@ func TestJWT_TokenExpiration(t *testing.T) {
 	userID := "user-exp-test"
 	before := time.Now()
 
-	token, err := auth.GenerateToken(userID, testJWTSecret)
+	token, err := auth.GenerateToken(userID, testJWTSecret, false)
 	if err != nil {
 		t.Fatalf("generate token: %v", err)
 	}
@@ -242,7 +243,7 @@ func TestJWT_TokenExpiration(t *testing.T) {
 func TestJWT_TokenContainsUserId(t *testing.T) {
 	userID := "user-id-claim-test"
 
-	token, err := auth.GenerateToken(userID, testJWTSecret)
+	token, err := auth.GenerateToken(userID, testJWTSecret, false)
 	if err != nil {
 		t.Fatalf("generate token: %v", err)
 	}
@@ -253,5 +254,102 @@ func TestJWT_TokenContainsUserId(t *testing.T) {
 	}
 	if claims.UserID != userID {
 		t.Fatalf("userId claim = %q, want %q", claims.UserID, userID)
+	}
+}
+
+func TestJWT_TokenIsDemoClaim(t *testing.T) {
+	userID := "user-demo-claim-test"
+
+	demoToken, err := auth.GenerateToken(userID, testJWTSecret, true)
+	if err != nil {
+		t.Fatalf("generate demo token: %v", err)
+	}
+	demoClaims, err := auth.ValidateToken(demoToken, testJWTSecret)
+	if err != nil {
+		t.Fatalf("validate demo token: %v", err)
+	}
+	if !demoClaims.IsDemo {
+		t.Fatal("expected isDemo=true on demo token")
+	}
+
+	normalToken, err := auth.GenerateToken(userID, testJWTSecret, false)
+	if err != nil {
+		t.Fatalf("generate normal token: %v", err)
+	}
+	normalClaims, err := auth.ValidateToken(normalToken, testJWTSecret)
+	if err != nil {
+		t.Fatalf("validate normal token: %v", err)
+	}
+	if normalClaims.IsDemo {
+		t.Fatal("expected isDemo=false on normal token")
+	}
+}
+
+func TestDemoLogin_IssuesReadOnlyToken(t *testing.T) {
+	h, userStore := newAuthTestHandler()
+	password := "demopass12"
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	hashStr := string(hash)
+	username := "demouser"
+	if err := userStore.Create(context.Background(), &model.User{
+		ID:           "demo-user-id",
+		Email:        "demouser@auth.djbook",
+		Username:     &username,
+		PasswordHash: &hashStr,
+	}); err != nil {
+		t.Fatalf("create demo user: %v", err)
+	}
+
+	rec := postJSON(t, h.DemoLogin, "/auth/demo", map[string]string{})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%q", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	resp := decodeAuthResponse(t, rec)
+	claims, err := auth.ValidateToken(resp.Token, testJWTSecret)
+	if err != nil {
+		t.Fatalf("validate token: %v", err)
+	}
+	if !claims.IsDemo {
+		t.Fatal("expected demo login token to have isDemo=true")
+	}
+}
+
+func TestLogin_IssuesWritableTokenEvenForDemoUsername(t *testing.T) {
+	h, userStore := newAuthTestHandler()
+	password := "demopass12"
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	hashStr := string(hash)
+	username := "demouser"
+	if err := userStore.Create(context.Background(), &model.User{
+		ID:           "demo-user-id",
+		Email:        "demouser@auth.djbook",
+		Username:     &username,
+		PasswordHash: &hashStr,
+	}); err != nil {
+		t.Fatalf("create demo user: %v", err)
+	}
+
+	rec := postJSON(t, h.Login, "/auth/login", map[string]string{
+		"username": username,
+		"password": password,
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body=%q", rec.Code, http.StatusOK, rec.Body.String())
+	}
+
+	resp := decodeAuthResponse(t, rec)
+	claims, err := auth.ValidateToken(resp.Token, testJWTSecret)
+	if err != nil {
+		t.Fatalf("validate token: %v", err)
+	}
+	if claims.IsDemo {
+		t.Fatal("expected regular login token to have isDemo=false")
 	}
 }

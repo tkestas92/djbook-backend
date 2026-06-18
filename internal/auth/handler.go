@@ -165,17 +165,25 @@ func buildRSAPublicKey(key *ApplePublicKey) (*rsa.PublicKey, error) {
 
 // Handler serves HTTP auth endpoints.
 type Handler struct {
-	userSvc    *service.UserService
-	profileSvc *service.ProfileService
-	jwtSecret  string
+	userSvc      *service.UserService
+	profileSvc   *service.ProfileService
+	jwtSecret    string
+	demoUsername string
+	demoPassword string
 }
 
 // NewHandler creates an auth HTTP handler.
-func NewHandler(userSvc *service.UserService, profileSvc *service.ProfileService, jwtSecret string) *Handler {
+func NewHandler(
+	userSvc *service.UserService,
+	profileSvc *service.ProfileService,
+	jwtSecret, demoUsername, demoPassword string,
+) *Handler {
 	return &Handler{
-		userSvc:    userSvc,
-		profileSvc: profileSvc,
-		jwtSecret:  jwtSecret,
+		userSvc:      userSvc,
+		profileSvc:   profileSvc,
+		jwtSecret:    jwtSecret,
+		demoUsername: demoUsername,
+		demoPassword: demoPassword,
 	}
 }
 
@@ -235,7 +243,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeAuthResponse(r.Context(), w, user.ID)
+	h.writeAuthResponse(r.Context(), w, user.ID, false)
 }
 
 // Login handles POST /auth/login with body { "username", "password" }.
@@ -267,10 +275,30 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeAuthResponse(r.Context(), w, user.ID)
+	h.writeAuthResponse(r.Context(), w, user.ID, false)
 }
 
-func (h *Handler) writeAuthResponse(ctx context.Context, w http.ResponseWriter, userID string) {
+// DemoLogin handles POST /auth/demo and issues a read-only demo session token.
+func (h *Handler) DemoLogin(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user, err := h.userSvc.Authenticate(r.Context(), h.demoUsername, h.demoPassword)
+	if err != nil {
+		if err == service.ErrInvalidCredentials {
+			http.Error(w, "demo account unavailable", http.StatusServiceUnavailable)
+			return
+		}
+		http.Error(w, "auth error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	h.writeAuthResponse(r.Context(), w, user.ID, true)
+}
+
+func (h *Handler) writeAuthResponse(ctx context.Context, w http.ResponseWriter, userID string, isDemo bool) {
 	profiles, err := h.profileSvc.ListByUserID(ctx, userID)
 	if err != nil {
 		http.Error(w, "profiles error: "+err.Error(), http.StatusInternalServerError)
@@ -286,7 +314,7 @@ func (h *Handler) writeAuthResponse(ctx context.Context, w http.ResponseWriter, 
 		})
 	}
 
-	token, err := GenerateToken(userID, h.jwtSecret)
+	token, err := GenerateToken(userID, h.jwtSecret, isDemo)
 	if err != nil {
 		http.Error(w, "token error", http.StatusInternalServerError)
 		return
