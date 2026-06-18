@@ -11,14 +11,18 @@ import (
 )
 
 type EventService struct {
-	repo *repository.EventRepository
+	repo repository.EventStore
 }
 
-func NewEventService(repo *repository.EventRepository) *EventService {
+func NewEventService(repo repository.EventStore) *EventService {
 	return &EventService{repo: repo}
 }
 
 func (s *EventService) Create(ctx context.Context, profileID string, input model.Event) (*model.Event, error) {
+	if err := validateEventInput(input); err != nil {
+		return nil, err
+	}
+
 	input.ID = uuid.New().String()
 	input.ProfileID = profileID
 
@@ -136,4 +140,11 @@ func (s *EventService) AssertOwner(ctx context.Context, eventID, userID string) 
 // ParseDate parses a date string in YYYY-MM-DD format.
 func ParseDate(s string) (time.Time, error) {
 	return time.Parse("2006-01-02", s)
+}
+
+func validateEventInput(input model.Event) error {
+	if err := repository.ValidateEventInput(input); err != nil {
+		return err
+	}
+	return nil
 }
