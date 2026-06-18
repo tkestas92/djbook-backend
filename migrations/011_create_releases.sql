@@ -1,4 +1,4 @@
-CREATE TABLE releases (
+CREATE TABLE IF NOT EXISTS releases (
   id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
   profile_id CHAR(36) NOT NULL,
   title VARCHAR(255) NOT NULL,
